@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
-import path from 'path';
-import fs from 'fs';
+// import path from 'path';
+// import fs from 'fs';
 
 export const runtime = 'edge';
 
@@ -10,13 +10,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Email Configuration
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'brightstore01.info@gmail.com',
-        pass: 'oevj exqt ttjf bwgr', // App Password
-    },
-});
+// const transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//         user: 'brightstore01.info@gmail.com',
+//         pass: 'oevj exqt ttjf bwgr', // App Password
+//     },
+// });
 
 export async function POST(request: Request) {
     console.log('Checkout API called');
@@ -55,6 +55,8 @@ export async function POST(request: Request) {
                     address_line2: profile.address_line2,
                     city: profile.city,
                     pincode: profile.pincode,
+                    state: profile.state || 'Kerala', // Default state if missing
+                    landmark: profile.landmark || '',
                 },
                 status: 'pending'
             })
@@ -67,8 +69,15 @@ export async function POST(request: Request) {
         }
         console.log('Order saved:', order.id);
 
+        const orderId = order.id;
+
+        // NOTE: Email sending is temporarily disabled for Cloudflare Edge compatibility.
+        // Nodemailer does not work in Edge Runtime.
+        // TODO: Switch to Resend or SendGrid API for email sending.
+
+        /*
         // 2. Generate Email Content
-        const orderId = order.id.slice(0, 8).toUpperCase();
+        const orderIdDisplay = order.id.slice(0, 8).toUpperCase();
         const date = new Date().toLocaleDateString('en-IN', {
             year: 'numeric',
             month: 'long',
@@ -97,7 +106,7 @@ export async function POST(request: Request) {
                     <p>Thank you for your order! We have received your request and will process it shortly.</p>
                     
                     <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0;">
-                        <p><strong>Order ID:</strong> #${orderId}</p>
+                        <p><strong>Order ID:</strong> #${orderIdDisplay}</p>
                         <p><strong>Date:</strong> ${date}</p>
                         <p><strong>Status:</strong> Pending</p>
                     </div>
@@ -179,7 +188,7 @@ export async function POST(request: Request) {
         const mailOptions = {
             from: '"Bright Store" <brightstore01.info@gmail.com>',
             to: 'brightstore01.info@gmail.com', // Always send to owner
-            subject: `New Order #${orderId} from ${profile.full_name}`,
+            subject: `New Order #${orderIdDisplay} from ${profile.full_name}`,
             html: emailHtml.replace(
                 '<h1>Bright Store</h1>',
                 '<img src="cid:logo" alt="Bright Store" style="max-width: 150px; margin-bottom: 10px;" />'
@@ -198,13 +207,14 @@ export async function POST(request: Request) {
             await transporter.sendMail({
                 ...mailOptions,
                 to: userEmail,
-                subject: `Order Confirmation #${orderId} - Bright Store`,
+                subject: `Order Confirmation #${orderIdDisplay} - Bright Store`,
                 html: emailHtml.replace('New Order Received', 'Order Confirmation'), // Slight adjustment if needed
             });
             console.log(`Email sent to customer: ${userEmail}`);
         } else {
             console.log('No customer email found, skipping customer email.');
         }
+        */
 
         return NextResponse.json({ success: true, orderId });
 
