@@ -12,6 +12,8 @@ import { ShoppingBag, Heart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+export const runtime = 'edge';
+
 export default function ProductDetailsPage() {
     const { id } = useParams();
     const [product, setProduct] = useState<Product | null>(null);
@@ -157,8 +159,8 @@ export default function ProductDetailsPage() {
                                 onClick={() => addToCart(product, quantity)}
                                 disabled={(product.stock_quantity || 0) === 0}
                                 className={`flex-1 font-bold rounded-xl transition flex items-center justify-center gap-2 text-lg ${(product.stock_quantity || 0) > 0
-                                        ? 'bg-yellow-500 text-black hover:bg-yellow-400'
-                                        : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                                    ? 'bg-yellow-500 text-black hover:bg-yellow-400'
+                                    : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
                                     }`}
                             >
                                 <ShoppingBag />
