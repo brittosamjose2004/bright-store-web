@@ -8,6 +8,8 @@ import { Loader2, Package, MapPin, Phone, CheckCircle, Circle, ArrowLeft } from 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+export const runtime = 'edge';
+
 export default function OrderDetailsPage() {
     const { id } = useParams();
     const [order, setOrder] = useState<any>(null);
