@@ -61,9 +61,19 @@ export default function OrdersPage() {
         <main className="min-h-screen bg-neutral-950 text-white">
             <Navbar />
             <div className="max-w-4xl mx-auto px-4 pt-24 pb-12">
-                <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                    My Orders
-                </h1>
+                <div className="flex items-center justify-between mb-8">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                        My Orders
+                    </h1>
+                    <button
+                        onClick={loadOrders}
+                        disabled={loading}
+                        className="p-2 text-neutral-400 hover:text-yellow-500 transition rounded-full hover:bg-neutral-900"
+                        title="Refresh Orders"
+                    >
+                        <Clock size={20} className={loading ? "animate-spin" : ""} />
+                    </button>
+                </div>
 
                 {orders.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 bg-neutral-900/50 rounded-2xl border border-neutral-800">

@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "8afcf68d-5e5d-4abd-ad4a-bb5007812bd6"
+      }
+    },
+    "android": {
+      "package": "com.britto1999.brightstoreweb"
+    }
+  }
+}
