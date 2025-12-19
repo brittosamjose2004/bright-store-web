@@ -22,7 +22,17 @@ export default function AdminAdsPage() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (data) setAds(data);
+        if (data) {
+            const formattedAds: Banner[] = data.map((item: any) => ({
+                id: item.id,
+                title: item.title,
+                imageUrl: item.image_url,
+                link: item.link,
+                active: item.active,
+                displayOrder: item.display_order
+            }));
+            setAds(formattedAds);
+        }
         setLoading(false);
     };
 
@@ -131,7 +141,7 @@ export default function AdminAdsPage() {
                     <div key={ad.id} className={`relative group rounded-xl overflow-hidden border ${ad.active ? 'border-neutral-700' : 'border-red-900 opacity-50'}`}>
                         <div className="aspect-video relative">
                             <Image
-                                src={ad.imageUrl || ad.image_url}
+                                src={ad.imageUrl}
                                 alt={ad.title}
                                 fill
                                 className="object-cover"
@@ -144,7 +154,7 @@ export default function AdminAdsPage() {
                                     {ad.active ? 'Disable' : 'Enable'}
                                 </button>
                                 <button
-                                    onClick={() => deleteAd(ad.id, ad.imageUrl || ad.image_url)}
+                                    onClick={() => deleteAd(ad.id, ad.imageUrl)}
                                     className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                                 >
                                     <Trash2 size={20} />
