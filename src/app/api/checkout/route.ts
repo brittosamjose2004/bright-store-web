@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
-// import nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
-// import path from 'path';
-// import fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs'; // Changed to nodejs for Nodemailer compatibility
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Email Configuration
-// const transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//         user: 'brightstore01.info@gmail.com',
-//         pass: 'oevj exqt ttjf bwgr', // App Password
-//     },
-// });
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'brightstore01.info@gmail.com',
+        pass: 'oevj exqt ttjf bwgr', // App Password
+    },
+});
 
 export async function POST(request: Request) {
     console.log('Checkout API called');
@@ -71,11 +71,6 @@ export async function POST(request: Request) {
 
         const orderId = order.id;
 
-        // NOTE: Email sending is temporarily disabled for Cloudflare Edge compatibility.
-        // Nodemailer does not work in Edge Runtime.
-        // TODO: Switch to Resend or SendGrid API for email sending.
-
-        /*
         // 2. Generate Email Content
         const orderIdDisplay = order.id.slice(0, 8).toUpperCase();
         const date = new Date().toLocaleDateString('en-IN', {
@@ -214,7 +209,6 @@ export async function POST(request: Request) {
         } else {
             console.log('No customer email found, skipping customer email.');
         }
-        */
 
         return NextResponse.json({ success: true, orderId });
 

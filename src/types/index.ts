@@ -1,3 +1,13 @@
+export interface VariantOption {
+    label: string;
+    priceModifier: number;
+}
+
+export interface Variant {
+    name: string;
+    options: VariantOption[];
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -8,6 +18,7 @@ export interface Product {
     category: string;
     imageUrl: string;
     stock_quantity?: number;
+    variants?: Variant[];
     createdAt: string;
 }
 

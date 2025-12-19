@@ -18,8 +18,9 @@ export async function getProducts(): Promise<Product[]> {
         wholesalePrice: item.wholesaleprice, // Map from DB
         category: item.category,
         imageUrl: item.imageurl, // Map from DB
-        stock_quantity: item.stock_quantity, // Added
-        minWholesaleQuantity: item.minwholesalequantity, // Map from DB
+        stock_quantity: item.stock_quantity,
+        minWholesaleQuantity: item.minwholesalequantity,
+        variants: item.variants || [],
         createdAt: item.created_at,
     })) as Product[];
 }
@@ -41,8 +42,9 @@ export async function getProductById(id: string): Promise<Product | null> {
         wholesalePrice: data.wholesaleprice,
         category: data.category,
         imageUrl: data.imageurl,
-        stock_quantity: data.stock_quantity, // Added
+        stock_quantity: data.stock_quantity,
         minWholesaleQuantity: data.minwholesalequantity,
+        variants: data.variants || [],
         createdAt: data.created_at,
     } as Product;
 }
@@ -55,9 +57,10 @@ export async function addProduct(product: Omit<Product, 'id'>) {
         wholesaleprice: product.wholesalePrice, // Map to lowercase
         category: product.category,
         imageurl: product.imageUrl, // Map to lowercase
-        stock_quantity: product.stock_quantity || 0, // Added
-        minwholesalequantity: product.minWholesaleQuantity, // Map to lowercase
-        created_at: new Date().toISOString(), // Map to snake_case
+        stock_quantity: product.stock_quantity || 0,
+        minwholesalequantity: product.minWholesaleQuantity,
+        variants: product.variants || [], // Map to jsonb
+        created_at: new Date().toISOString(),
     };
 
     const { error } = await supabase
@@ -68,6 +71,27 @@ export async function addProduct(product: Omit<Product, 'id'>) {
         console.error('Supabase Error:', error);
         throw error;
     }
+}
+
+export async function bulkAddProducts(products: Omit<Product, 'id'>[]) {
+    const dbProducts = products.map(product => ({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        wholesaleprice: product.wholesalePrice,
+        category: product.category,
+        imageurl: product.imageUrl,
+        stock_quantity: product.stock_quantity || 0,
+        minwholesalequantity: product.minWholesaleQuantity,
+        variants: product.variants || [],
+        created_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase
+        .from('products')
+        .insert(dbProducts);
+
+    if (error) throw error;
 }
 
 export async function updateProduct(id: string, product: Partial<Product>) {
