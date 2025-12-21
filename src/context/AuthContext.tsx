@@ -72,6 +72,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
+        // Failsafe: Force loading to false after 5 seconds
+        const timeoutId = setTimeout(() => {
+            console.warn('Auth initialization timed out, forcing loading false');
+            setLoading(false);
+        }, 5000);
+
         const setData = async () => {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
@@ -84,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } catch (error) {
                 console.error('Error initializing auth:', error);
             } finally {
+                clearTimeout(timeoutId);
                 setLoading(false);
             }
         };
