@@ -25,6 +25,7 @@ type GridRow = {
 export default function BulkProductPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [loadingStatus, setLoadingStatus] = useState('Saving...');
     const [rows, setRows] = useState<GridRow[]>([
         { id: '1', name: '', category: 'grocery', price: '', wholesalePrice: '', stock: '100', minWholesale: '5', description: '', imageFile: null, previewUrl: null }
     ]);
@@ -72,12 +73,24 @@ export default function BulkProductPage() {
         if (!confirm(`Ready to add ${validRows.length} products?`)) return;
 
         setLoading(true);
+        setLoadingStatus('Starting...');
+
+        // Failsafe timeout
+        const timeoutId = setTimeout(() => {
+            if (loading) {
+                setLoading(false);
+                alert('Request timed out. Please check your internet connection or try valid images.');
+            }
+        }, 30000); // 30 seconds
+
         try {
             // Upload images first
-            const productsWithImages = await Promise.all(validRows.map(async (row) => {
+            setLoadingStatus('Uploading Images...');
+            const productsWithImages = await Promise.all(validRows.map(async (row, i) => {
                 let imageUrl = '';
                 if (row.imageFile) {
                     try {
+                        setLoadingStatus(`Uploading Image ${i + 1}/${validRows.length}...`);
                         imageUrl = await uploadImage(row.imageFile);
                     } catch (err) {
                         console.error(`Failed to upload image for ${row.name}`, err);
@@ -98,12 +111,15 @@ export default function BulkProductPage() {
                 } as Omit<Product, 'id' | 'createdAt'>;
             }));
 
+            setLoadingStatus('Saving to Database...');
             // @ts-ignore - createdAt is handled in backend/wrapper
             await bulkAddProducts(productsWithImages);
 
+            clearTimeout(timeoutId);
             alert('Products Added Successfully!');
             router.push('/admin/products');
         } catch (error: any) {
+            clearTimeout(timeoutId);
             console.error(error);
             alert('Error: ' + error.message);
         } finally {
@@ -131,7 +147,7 @@ export default function BulkProductPage() {
                         disabled={loading}
                         className="flex items-center gap-2 px-6 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 disabled:opacity-50"
                     >
-                        {loading ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save All</>}
+                        {loading ? <><Loader2 className="animate-spin" size={20} /> {loadingStatus}</> : <><Save size={20} /> Save All</>}
                     </button>
                 </div>
             </div>
