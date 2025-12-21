@@ -17,6 +17,12 @@ export default function AdminLogin() {
         setLoading(true);
         setError('');
 
+        // Failsafe timeout
+        const timeoutId = setTimeout(() => {
+            setLoading(false);
+            setError('Request timed out. Please check your internet connection.');
+        }, 15000); // 15 seconds
+
         try {
             const { error } = await supabase.auth.signInWithPassword({
                 email,
@@ -24,10 +30,12 @@ export default function AdminLogin() {
             });
 
             if (error) throw error;
+
+            clearTimeout(timeoutId);
             router.push('/admin');
         } catch (err: any) {
+            clearTimeout(timeoutId);
             setError(err.message || 'Invalid email or password');
-        } finally {
             setLoading(false);
         }
     };
