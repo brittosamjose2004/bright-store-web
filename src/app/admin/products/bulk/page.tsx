@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { bulkAddProducts } from '@/lib/firestore';
+import { bulkAddProducts, uploadImage } from '@/lib/firestore';
 import { useRouter } from 'next/navigation';
-import { Plus, Save, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Save, Trash2, ArrowLeft, Upload, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Product } from '@/types';
+import Image from 'next/image';
 
 // Simple types for the grid
 type GridRow = {
@@ -17,13 +18,15 @@ type GridRow = {
     stock: string;
     minWholesale: string;
     description: string;
+    imageFile: File | null;
+    previewUrl: string | null;
 };
 
 export default function BulkProductPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [rows, setRows] = useState<GridRow[]>([
-        { id: '1', name: '', category: 'grocery', price: '', wholesalePrice: '', stock: '100', minWholesale: '5', description: '' }
+        { id: '1', name: '', category: 'grocery', price: '', wholesalePrice: '', stock: '100', minWholesale: '5', description: '', imageFile: null, previewUrl: null }
     ]);
 
     const addRow = () => {
@@ -35,7 +38,9 @@ export default function BulkProductPage() {
             wholesalePrice: '',
             stock: '100',
             minWholesale: '5',
-            description: ''
+            description: '',
+            imageFile: null,
+            previewUrl: null
         }]);
     };
 
@@ -47,6 +52,13 @@ export default function BulkProductPage() {
 
     const updateRow = (id: string, field: keyof GridRow, value: string) => {
         setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r));
+    };
+
+    const handleImageChange = (id: string, file: File) => {
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            setRows(rows.map(r => r.id === id ? { ...r, imageFile: file, previewUrl } : r));
+        }
     };
 
     const handleSave = async () => {
@@ -61,20 +73,33 @@ export default function BulkProductPage() {
 
         setLoading(true);
         try {
-            const productsToAdd: Omit<Product, 'id' | 'createdAt'>[] = validRows.map(r => ({
-                name: r.name,
-                description: r.description,
-                price: Number(r.price),
-                wholesalePrice: Number(r.wholesalePrice || r.price), // fallback to retail if empty
-                category: r.category,
-                minWholesaleQuantity: Number(r.minWholesale),
-                stock_quantity: Number(r.stock),
-                imageUrl: '', // Blank image for bulk add
-                variants: [],
+            // Upload images first
+            const productsWithImages = await Promise.all(validRows.map(async (row) => {
+                let imageUrl = '';
+                if (row.imageFile) {
+                    try {
+                        imageUrl = await uploadImage(row.imageFile);
+                    } catch (err) {
+                        console.error(`Failed to upload image for ${row.name}`, err);
+                        // Continue without image or handle error? For bulk, maybe warning is better.
+                    }
+                }
+
+                return {
+                    name: row.name,
+                    description: row.description,
+                    price: Number(row.price),
+                    wholesalePrice: Number(row.wholesalePrice || row.price), // fallback to retail if empty
+                    category: row.category,
+                    minWholesaleQuantity: Number(row.minWholesale),
+                    stock_quantity: Number(row.stock),
+                    imageUrl: imageUrl,
+                    variants: [],
+                } as Omit<Product, 'id' | 'createdAt'>;
             }));
 
             // @ts-ignore - createdAt is handled in backend/wrapper
-            await bulkAddProducts(productsToAdd);
+            await bulkAddProducts(productsWithImages);
 
             alert('Products Added Successfully!');
             router.push('/admin/products');
@@ -106,7 +131,7 @@ export default function BulkProductPage() {
                         disabled={loading}
                         className="flex items-center gap-2 px-6 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 disabled:opacity-50"
                     >
-                        {loading ? 'Saving...' : <><Save size={20} /> Save All</>}
+                        {loading ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save All</>}
                     </button>
                 </div>
             </div>
@@ -116,6 +141,7 @@ export default function BulkProductPage() {
                     <thead>
                         <tr className="bg-neutral-900 text-sm text-neutral-400 border-b border-neutral-800">
                             <th className="p-4 w-12">#</th>
+                            <th className="p-4 w-20">Image</th>
                             <th className="p-4 w-1/4">Name</th>
                             <th className="p-4 w-1/6">Category</th>
                             <th className="p-4 w-24">Price (₹)</th>
@@ -129,6 +155,28 @@ export default function BulkProductPage() {
                         {rows.map((row, index) => (
                             <tr key={row.id} className="hover:bg-neutral-900 transition group">
                                 <td className="p-4 text-neutral-500">{index + 1}</td>
+                                <td className="p-2">
+                                    <div className="relative w-12 h-12 bg-neutral-800 rounded overflow-hidden flex items-center justify-center cursor-pointer group/image">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) handleImageChange(row.id, e.target.files[0]);
+                                            }}
+                                        />
+                                        {row.previewUrl ? (
+                                            <Image
+                                                src={row.previewUrl}
+                                                alt="Preview"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <Upload size={16} className="text-neutral-500" />
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="p-2">
                                     <input
                                         className="w-full bg-transparent border border-transparent hover:border-neutral-700 focus:border-yellow-500 rounded p-2 outline-none"
