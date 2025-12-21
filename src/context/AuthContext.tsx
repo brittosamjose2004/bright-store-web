@@ -119,8 +119,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Check if profile is missing or incomplete (phone is a good mandatory field)
             const isIncomplete = !profile || !profile.phone || !profile.address_line1;
 
-            // Avoid redirecting if already on profile page to prevent loop
-            if (isIncomplete && pathname !== '/profile') {
+            // Avoid redirecting if already on profile page OR if in admin area
+            const isAdminRoute = pathname?.startsWith('/admin');
+            if (isIncomplete && pathname !== '/profile' && !isAdminRoute) {
                 console.log('Profile incomplete, redirecting to /profile');
                 router.push('/profile');
             }
