@@ -77,10 +77,9 @@ export default function BulkProductPage() {
 
         // Failsafe timeout
         const timeoutId = setTimeout(() => {
-            if (loading) {
-                setLoading(false);
-                alert('Request timed out. Please check your internet connection or try valid images.');
-            }
+            setLoading(false);
+            setLoadingStatus('Timed Out');
+            alert('Request timed out. Please check:\n1. Your internet connection.\n2. In Supabase Dashboard -> Storage: Ensure a public bucket named "products" exists.');
         }, 30000); // 30 seconds
 
         try {
